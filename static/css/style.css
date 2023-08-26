@@ -1,0 +1,6 @@
+.list-group-item:hover {
+    background-color: #fffacd;
+}
+.now-task{
+    background-color: #fffacd!important;
+}
