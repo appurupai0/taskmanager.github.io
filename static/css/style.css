@@ -1,6 +1,3 @@
-.list-group-item:hover {
-    background-color: #fffacd;
-}
-.now-task{
-    background-color: #fffacd!important;
+.list-group-item-warning {
+	background-color: white;
 }
