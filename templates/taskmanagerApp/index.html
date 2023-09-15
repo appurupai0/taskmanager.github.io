@@ -13,7 +13,7 @@
             <input type="hidden" name="no" alue="1">
             <div class="input-group">
                 <span class="input-group-text col-2 text-center">今日のタスク</span>
-                <textarea id="task_text" name="input_task" class="form-control" aria-label="With textarea" style="height:200px" placeholder="本日のタスクを入力してくださいね♪">{% if input_task %}{{ input_task }}{% endif %}</textarea>
+                <textarea id="input_text" name="input_task" class="form-control" aria-label="With textarea" style="height:200px" placeholder="本日のタスクを入力してくださいね♪">{% if input_task %}{{ input_task }}{% endif %}</textarea>
             </div>
             <div class="mt-3">
                 <button type="submit" class="btn btn-primary mr-4" id="add" name="add">タスク登録</button>
@@ -41,6 +41,10 @@
     </div>
 	{% endif %}
 {% block extra_js %}
+$('#input_task').change(function() {
+    let task_list = [];
+
+});
 <!--$('#add').click(function() {-->
 <!--    let task_list = [];-->
 <!--    // 入力値取得-->
