@@ -5,67 +5,198 @@
 
 {% block content %}
     <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-3">
-        <a class="navbar-brand" href="#">Task Manager</a>
+        <a class="navbar-brand" href="{% url 'top' %}">Task Manager</a>
+        <a class="navbar-brand fs-5" href="{% url 'my-page' %}">マイページへ</a>
+        <a class="navbar-brand fs-5" href="{% url 'logout' %}">ログアウト</a>
     </nav>
     <div class="container mt-4">
-        <form method="post">
+        <form method="POST" action="{% url 'confirm_today_task' %}">
             {% csrf_token %}
-            <input type="hidden" name="no" alue="1">
+            <input type="hidden" name="all_task_data">
             <div class="input-group">
-                <span class="input-group-text col-2 text-center">今日のタスク</span>
-                <textarea id="input_text" name="input_task" class="form-control" aria-label="With textarea" style="height:200px" placeholder="本日のタスクを入力してくださいね♪">{% if input_task %}{{ input_task }}{% endif %}</textarea>
+                <span class="input-group-text col-3 text-center text-wrap">今日のタスク</span>
+                <textarea id="input_task" name="input_task" class="form-control" aria-label="With textarea" style="height:200px" placeholder="本日のタスクを入力してくださいね♪">{% if input_task %}{{ input_task }}{% endif %}</textarea>
             </div>
             <div class="mt-3">
-                <button type="submit" class="btn btn-primary mr-4" id="add" name="add">タスク登録</button>
-                <button type="button" class="btn btn-secondary" id="finish" name="finish">業務終了</button>
+        <!--                <button type="submit" class="btn btn-primary mr-4" id="add" name="add">タスク登録</button>-->
+                <button type="submit" class="btn btn-primary" id="finish" name="confirm">業務終了確認へ</button>
             </div>
         </form>
     </div>
-	{% if task_list %}
     <div class="container mt-4 mb-5" id="today_task_list">
-        <div class="list-group">
-			{% for task in task_list %}
-			<button type="button" class="list-group-item list-group-item-action list-group-item-warning d-flex justify-content-between">
-				<div class="today-task">
-					<p class="task mb-1">{{ task.task_name }}</p>
-					<p class="plan-time mb-1">予定：{{ task.task_hour }}</p>
-					<p class="elapsed_time mb-1">実績：</p>
-				</div>
-				<div class="timer">
-					<!--ここに前原さんから共有してもらったタイマーを実装して右寄せ-->
-					ここにタイマーを表示させる
-				</div>
-			</button>
-			{% endfor %}
+        <div id="list_group" class="list-group">
         </div>
     </div>
-	{% endif %}
-{% block extra_js %}
-$('#input_task').change(function() {
-    let task_list = [];
-
-});
-<!--$('#add').click(function() {-->
-<!--    let task_list = [];-->
-<!--    // 入力値取得-->
-<!--    let input_task_list = $('#task_text').val().split('\n');-->
-<!--    //正規表現-->
-<!--    regex_pattern = /^\d+\.\s*(\[.+?\]\s*.+?)\s*->\s+予定[:：]\s*+(.+?)$/;-->
-<!--    for (var task of task_list) {-->
-<!--        if(task.trim()) {-->
-<!--            matches = task.match(regex_pattern);-->
-<!--            if(matches) {-->
-<!--                let task_name = matches[0];-->
-<!--                let task_hour = matches[1];-->
-<!--                // ここでボタンリストを作成する関数を呼び出す（引数はtask_name と　task_hour)-->
-<!--            }-->
-<!--        }-->
-<!--    }-->
-<!--    // 受け取った入力を正規表現で分類（改行で区別、:の数字で時間表記へ直すなど必要な値を抽出）-->
-<!--});-->
-<script>
-$(function(){
-});
-</script>
 {% endblock %}
+{% block extra_js %}
+<script>
+$(function() {
+    // タスクを入力する時
+    $('#input_task').on('input', function() {
+        // 編集する場合、生成されるDOMをリセットする
+        $('#list_group').empty();
+
+        let task_list = [];
+        // 入力値取得
+        let input_task_list = $('#input_task').val().split('\n');
+        //正規表現
+        let regex_pattern = /^\d+\.\s*(.+?)\s*->\s+予定[:：]\s*(.+?)[hｈ]$/;
+        for (var task of input_task_list) {
+            if(task.trim()) {
+                let matches = task.match(regex_pattern);
+                if(matches) {
+                    let task_name = matches[1];
+                    let task_hour = matches[2];
+                    // ここでボタンリストを作成する関数を呼び出す（引数はtask_name と　task_hour)
+                    dom_generation(task_name, task_hour);
+                }
+            }
+        }
+        // 受け取った入力を正規表現で分類（改行で区別、:の数字で時間表記へ直すなど必要な値を抽出）
+    });
+
+
+    //タスクボタン押下時の時間計測
+    var intervalId; // タイマーのIDを格納する変数
+    var startTime; // タスクの開始時間を格納する変数
+    var elapsedTime = 0; // 経過時間を格納する変数
+    var taskNameInProgress; // 現在進行中のタスク名を格納する変数
+
+    // タスクボタンのクリックイベント
+    $('#list_group').on('click', '.list-group-item', function () {
+        var active_task = $(this);
+
+        // 現在の経過時間を一時停止して保存
+        pauseTimer();
+
+        // タスクの情報を取得
+        var taskName = active_task.find('.task').text();
+        var planTime = active_task.find('.plan-time').text().split('：')[1];
+
+        // ローカルストレージから経過時間を取得
+        var storedElapsedTime = localStorage.getItem(taskName);
+        elapsedTime = storedElapsedTime !== null ? parseInt(storedElapsedTime) : 0;
+
+        // タイマー再開
+        startTime = Date.now();
+        intervalId = setInterval(function () {
+            updateTimer(taskName, elapsedTime, active_task);
+        }, 1000);
+
+        // 現在進行中のタスクを設定
+        taskNameInProgress = taskName;
+    });
+
+    // タイマーを更新する関数
+    function updateTimer(taskName, elapsedTime, active_task) {
+        now_elapsed_time = (Date.now() - startTime) / 1000; // 経過時間（秒）
+        // ローカルストレージにある場合はその秒数から加算(無ければ　+0）
+        const elapsed_time = now_elapsed_time + elapsedTime
+
+        // ローカルストレージに保存する
+        localStorage.setItem(taskName, elapsed_time)
+
+        // 秒をhh:mm の形に変換
+        time = secondsToHHMM(elapsed_time);
+
+        // 実績を更新
+        var task_achievement = active_task.find('.elapsed_time');
+        task_achievement.text(`実績：${time}`);
+    }
+
+    // タイマーを一時停止する関数
+    function pauseTimer() {
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+    }
+
+
+    // 業務終了ボタンが押されたとき
+    $('#finish').click(function() {
+        // タスクの入力値を取得
+        const input_task = $('#input_task').val();
+        // input_taskが入力されていない場合アラート
+        if (input_task.trim() === "") {
+            alert("今日のタスクが入力されていません");
+            return false;
+        }
+
+        // すべての計測を停止
+        pauseTimer()
+
+        // confirm画面を表示
+        if(!confirm("今日の業務の計測をすべて停止し、実績確認画面へ進みますか？")) {
+            return false;
+        }
+        // localStorageの全データを取り出す
+        const all_task_data = {};
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            var value = localStorage.getItem(key);
+            all_task_data[key] = value;
+        }
+        console.log(all_task_data);
+
+        // ローカルストレージのタスク経過時間を格納してview側へ送る
+        $('input[name="all_task_data"]').val(JSON.stringify(all_task_data));
+    });
+});
+
+
+// タスクボタンのDOM作成関数
+function dom_generation(task_name, task_hour) {
+    // task_hourを　秒数に直す
+    const task_hour_sec = parseFloat(task_hour) * 60 * 60;
+    const plan_time = secondsToHHMM(task_hour_sec);
+
+    var $button = $('<button type="button" class="list-group-item list-group-item-action list-group-item-warning d-flex justify-content-between"></button>');
+    $('#list_group').append($button);
+
+    var $today_task = $('<div class="today-task"></div>');
+    var $cnt_timer = $('<div class="timer"></div>');
+    $button.append($today_task);
+    $button.append($cnt_timer);
+
+    var $task = $('<p class="task mb-1"></p>');
+    var $task_plan_hour = $('<p class="plan-time mb-1">予定：</p>');
+    var $task_achievement = $('<p class="elapsed_time mb-1">実績：</p>');
+    $today_task.append($task);
+    $today_task.append($task_plan_hour);
+    $today_task.append($task_achievement);
+
+    //val()でタスクと時間を入れる
+    $task.text(task_name);
+    const task_plan_hour_txt = $task_plan_hour.text();
+    const new_text = task_plan_hour_txt + plan_time;
+    $task_plan_hour.text(new_text);
+
+    // 実績の値はもし保存されていたらそれも表示
+    var storedElapsedTime = localStorage.getItem(task_name);
+    if (storedElapsedTime !== null) {
+        const elapsed_time = secondsToHHMM(storedElapsedTime);
+        const task_achievement_txt = $task_achievement.text();
+        const new_text_achieve = task_achievement_txt + elapsed_time;
+        $task_achievement.text(new_text_achieve);
+    }
+
+    //timer を配置する場所だけ調整すること
+
+}
+
+// 秒数を hh:mm:ssに変換する
+function secondsToHHMM(seconds) {
+    var hours = Math.floor(seconds / 3600);
+    var minutes = Math.floor((seconds % 3600) / 60);
+    var re_seconds = Math.floor(seconds % 60);
+
+    // 1桁の場合は0を付加
+    hours = hours < 10 ? "0" + hours : hours;
+    minutes = minutes < 10 ? "0" + minutes : minutes;
+    re_seconds = re_seconds < 10 ? "0" + re_seconds : re_seconds;
+
+    return hours + ":" + minutes + ":" + re_seconds;
+}
+</script>
 {% endblock %}

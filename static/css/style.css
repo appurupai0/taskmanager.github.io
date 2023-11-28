@@ -1,3 +1,20 @@
 .list-group-item-warning {
 	background-color: white;
 }
+
+/* カレンダーのスタイリング調整 */
+.datepicker {
+  font-size: 14px;
+}
+
+.datepicker-days th, .datepicker-months th {
+  font-size: 14px;
+}
+
+.datepicker-days th, .datepicker-months th, .datepicker-years th {
+  text-align: center;
+}
+
+.datepicker-days td, .datepicker-months td, .datepicker-years td {
+  text-align: center;
+}
