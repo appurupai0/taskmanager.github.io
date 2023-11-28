@@ -1,0 +1,68 @@
+{% extends 'taskmanagerApp/base.html' %}
+{% load static %}
+
+{% block title %}本日の業務実績{% endblock %}
+
+{% block content %}
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-3">
+        <a class="navbar-brand" href="{% url 'top' %}">Task Manager</a>
+        <a class="navbar-brand fs-5" href="{% url 'my-page' %}">マイページへ</a>
+        <a class="navbar-brand fs-6" href="{% url 'logout' %}" style="font-size:11px;">ログアウト</a>
+    </nav>
+    <div class="container mt-4">
+        <form method="post" action="{% url 'confirm_today_task' %}" id="confirm">
+            {% csrf_token %}
+            <input type="hidden" name="all_task_data">
+            <div class="input-group">
+                <span class="input-group-text col-3 text-center text-wrap">今日のタスク</span>
+                <textarea id="input_task" name="input_task" class="form-control" aria-label="With textarea" style="height:200px" >{{ today_tasks }}</textarea>
+            </div>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-secondary" id="register" name="register">業務終了</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+$(function() {
+    // 業務終了ボタンが押されたとき
+    $('#register').click(function() {
+        if(!confirm("今日の業務を終え、今日の業務データを保存します。")) {
+            return false;
+        }
+        console.log('QQQQQQQQQQQQQQQQQQQQQQQQQQ');
+        // ローカルストレージの全データを取得
+        const all_data = getAllDataFromLocalStorage()
+        console.log(all_data)
+        // ローカルストレージのタスク経過時間を格納してview側へ送る
+        $('input[name="all_task_data"]').val(JSON.stringify(all_data));
+
+        // お疲れ様とtopへのリンクを表示
+        
+        
+        // ローカルストレージのデータを削除
+        
+    });
+});
+
+// ローカルストレージからすべてのデータを取得
+function getAllDataFromLocalStorage() {
+    if (typeof(Storage) !== "undefined") {
+        var allData = {};
+
+        // すべてのキーと値を取得
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            var value = localStorage.getItem(key);
+            allData[key] = value;
+        }
+
+        return allData;
+    } else {
+        console.error("Local storage is not supported in this browser.");
+        return null;
+    }
+}
+</script>
+{% endblock %}

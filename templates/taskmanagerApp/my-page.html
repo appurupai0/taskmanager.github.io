@@ -1,0 +1,108 @@
+{% extends 'taskmanagerApp/base.html' %}
+{% load static %}
+
+{% block title %}マイページ{% endblock %}
+
+{% block content %}
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-3">
+        <a class="navbar-brand" href="{% url 'top' %}">Task Manager</a>
+        <a class="navbar-brand fs-5" href="{% url 'my-page' %}">マイページへ</a>
+        <a class="navbar-brand fs-5" href="{% url 'logout' %}">ログアウト</a>
+    </nav>
+    <div class="col-12 mt-4 mb-4">
+        <h3>ユーザー情報</h3>
+        <ul>
+            <li>ユーザー名　　：{{ user.user_name }}</li>
+            <li>メールアドレス：{{ user.email }}</li>
+        </ul>
+    </div>
+    <div class="col-12 mt-4 mb-4">
+        <h3>これまでのタスクを検索</h3>
+    </div>
+    <form action="" method="GET">
+        <div class="col-6 mb-2">
+            <div class="input-group d-flex">
+                <span class="input-group-text">Search</span>
+                <input type="text" id="datepicker" name="datapicker" class="form-control" autocomplete="off" placeholder="日付を選択してください">
+                <button class="btn btn-secondary" type="submit" name="search">&#9166;</button>
+            </div>
+        </div>
+    </form>
+    {% if results %}
+    <div class="col-12 mt-4">
+        <h3>{{ search_date }}の業務内容</h3>
+        <ol>
+            {% for result in results %}
+                <li class="mb-2">タスク名：{{ result.task_name }}　予定時間：{{ result.task_plan_time }}h　実績：{{ result.task_end_time }}h</li>
+                <!-- Replace 'field_name' with the actual field you want to display -->
+            {% endfor %}
+        </ol>
+    </div>
+    {% endif %}
+    {% if message %}
+    <div class="ml-3">
+        <p>{{ message }}</p>
+    </div>
+    {% endif %}
+{% endblock %}
+{% block extra_js %}
+<script>
+$(function() {
+    // カレンダー表記
+    // Initialize datepicker
+    $('#datepicker').datepicker({
+      format: 'yyyy-mm-dd',
+      autoclose: true
+    });
+
+    // Show datepicker on button click
+    $('#datepicker').focus(function(){
+      $(this).datepicker('show');
+    });
+
+    // Prevent form submission (for demonstration purposes)
+    $('#searchForm').submit(function(e){
+      e.preventDefault();
+      alert('Search button clicked!');
+    });
+
+    // 業務終了ボタンが押されたとき
+    $('#register').click(function() {
+        if(!confirm("今日の業務を終え、今日の業務データを保存します。")) {
+            return false;
+        }
+        console.log('QQQQQQQQQQQQQQQQQQQQQQQQQQ');
+        // ローカルストレージの全データを取得
+        const all_data = getAllDataFromLocalStorage()
+        console.log(all_data)
+        // ローカルストレージのタスク経過時間を格納してview側へ送る
+        $('input[name="all_task_data"]').val(JSON.stringify(all_data));
+
+        // お疲れ様とtopへのリンクを表示
+
+
+        // ローカルストレージのデータを削除
+
+    });
+});
+
+// ローカルストレージからすべてのデータを取得
+function getAllDataFromLocalStorage() {
+    if (typeof(Storage) !== "undefined") {
+        var allData = {};
+
+        // すべてのキーと値を取得
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            var value = localStorage.getItem(key);
+            allData[key] = value;
+        }
+
+        return allData;
+    } else {
+        console.error("Local storage is not supported in this browser.");
+        return null;
+    }
+}
+</script>
+{% endblock %}

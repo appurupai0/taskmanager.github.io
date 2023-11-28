@@ -1,2 +1,34 @@
 {% extends 'taskmanagerApp/base.html' %}
 {% load static %}
+
+{% block title %}ログイン{% endblock %}
+
+{% block content %}
+
+<div class = "container h-100 mt-5">
+    <div class="row h-100 justify-content-center align-items-center">
+        <div class="wrapper">
+            <form action="" method="post" name="Login_Form" class="form-signin">
+                {% csrf_token %}
+                <h3 class="form-signin-heading text-center">TaskManager　ログイン</h3>
+                  <hr class="colorgraph"><br>
+
+                  {{ form.email }}
+                  {{ form.password }}
+
+                  <button class="btn btn-lg btn-primary btn-block mt-3" type="submit" name="login">ログイン</button>
+            </form>
+            {% if form.non_field_errors %}
+                <p class="text-center"><b>{{ form.non_field_errors }}</b></p>
+            {% endif %}
+            <div class="mt-4 text-center">
+                <a href="{% url 'register' %}">新規アカウント登録はこちら</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+{% block extra_js %}
+{% endblock %}
